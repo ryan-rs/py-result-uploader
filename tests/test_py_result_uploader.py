@@ -8,6 +8,7 @@ import pytest
 import json
 from py_result_uploader import py_result_uploader
 
+
 class TestLoadingInputJunitXMLFile(object):
     """Test cases for the '_load_input_file' function"""
 
@@ -55,15 +56,15 @@ class TestGenerateTestLog(object):
 
     @pytest.fixture()
     def properties(self):
-        props = {'JENKINS_CONSOLE_LOG_URL':'JENKINS_CONSOLE_LOG_URL',
-                 'SCENARIO':'SCENARIO',
-                 'ACTION':'ACTION',
-                 'IMAGE':'IMAGE',
-                 'OS_ARTIFACT_SHA':'OS_ARTIFACT_SHA',
-                 'PYTHON_ARTIFACT_SHA':'PYTHON_ARTIFACT_SHA',
-                 'APT_ARTIFACT_SHA':'APT_ARTIFACT_SHA',
-                 'GIT_REPO':'GIT_REPO',
-                 'GIT_BRANCH':'GIT_BRANCH'}
+        props = {'JENKINS_CONSOLE_LOG_URL': 'JENKINS_CONSOLE_LOG_URL',
+                 'SCENARIO': 'SCENARIO',
+                 'ACTION': 'ACTION',
+                 'IMAGE': 'IMAGE',
+                 'OS_ARTIFACT_SHA': 'OS_ARTIFACT_SHA',
+                 'PYTHON_ARTIFACT_SHA': 'PYTHON_ARTIFACT_SHA',
+                 'APT_ARTIFACT_SHA': 'APT_ARTIFACT_SHA',
+                 'GIT_REPO': 'GIT_REPO',
+                 'GIT_BRANCH': 'GIT_BRANCH'}
 
         return props
 
