@@ -5,7 +5,7 @@
 # Imports
 # ======================================================================================================================
 import pytest
-import json
+from swagger_client.rest import ApiException
 from py_result_uploader import py_result_uploader
 
 
@@ -192,29 +192,56 @@ class TestGenerateAutoRequest(object):
                 assert test_logs_exp[x][key] == auto_req_dict['test_logs'][x][key]
 
 
-class TestOutputJsonAutoRequest(object):
-    """Test cases for the 'output_json_auto_request' function"""
+class TestUploadTestResults(object):
+    """Test cases for the 'upload_test_results' function"""
 
-    def test_happy_path(self, single_passing_xml, tmpdir_factory):
-        """Verify that a valid JSON representation of a qTest 'AutomationRequest' swagger model is written to disk
-        from a JUnitXML file that contains a single passing test
-        """
+    def test_happy_path(self, single_passing_xml, mocker):
+        """Verify that the function can upload results from a JUnitXML file that contains a single passing test"""
 
         # Setup
+        api_token = 'valid_token'
+        project_id = 12345
         test_cycle = 'CL-1'
-        filename = tmpdir_factory.mktemp('data').join('happy_path.json').strpath
-        # noinspection PyUnresolvedReferences
-        py_result_uploader.output_json_auto_request(filename, single_passing_xml, test_cycle)
-        auto_req_dict = json.load(open(filename))
 
         # Expectation
-        test_name = 'test_pass'
-        prop_value = 'Unknown'
-        test_log_exp = {'name': test_name,
-                        'status': 'PASSED',
-                        'module_names': [prop_value],
-                        'automation_content': '{}#{}'.format(prop_value, test_name)}
+        job_id = '54321'
+
+        # Mock
+        mock_queue_resp = mocker.Mock(state='IN_WAITING', id=job_id)
+        mocker.patch('swagger_client.TestlogApi.submit_automation_test_logs_0', return_value=mock_queue_resp)
 
         # Test
-        for exp in test_log_exp:
-            assert test_log_exp[exp] == auto_req_dict['test_logs'][0][exp]
+        response = py_result_uploader.upload_test_results(single_passing_xml, api_token, project_id, test_cycle)
+        assert int(job_id) == response
+
+    def test_api_exception(self, single_passing_xml, mocker):
+        """Verify that the function fails gracefully if the API endpoint reports an API exception"""
+
+        # Setup
+        api_token = 'valid_token'
+        project_id = 12345
+        test_cycle = 'CL-1'
+
+        # Mock
+        mocker.patch('swagger_client.TestlogApi.submit_automation_test_logs_0',
+                     side_effect=ApiException('Super duper failure!'))
+
+        # Test
+        with pytest.raises(RuntimeError):
+            py_result_uploader.upload_test_results(single_passing_xml, api_token, project_id, test_cycle)
+
+    def test_job_queue_failure(self, single_passing_xml, mocker):
+        """Verify that the function fails gracefully if the job queue reports a failure"""
+
+        # Setup
+        api_token = 'valid_token'
+        project_id = 12345
+        test_cycle = 'CL-1'
+
+        # Mock
+        mock_queue_resp = mocker.Mock(state='FAILED')
+        mocker.patch('swagger_client.TestlogApi.submit_automation_test_logs_0', return_value=mock_queue_resp)
+
+        # Test
+        with pytest.raises(RuntimeError):
+            py_result_uploader.upload_test_results(single_passing_xml, api_token, project_id, test_cycle)
