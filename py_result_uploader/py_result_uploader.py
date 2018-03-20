@@ -3,9 +3,9 @@
 # ======================================================================================================================
 # Imports
 # ======================================================================================================================
-import json
 import re
 import swagger_client
+from swagger_client.rest import ApiException
 import xml.etree.ElementTree as Etree
 from datetime import datetime
 
@@ -99,25 +99,39 @@ def _generate_auto_request(junit_xml, test_cycle):
     return auto_req
 
 
-def output_json_auto_request(output_file_path, junit_xml_file_path, test_cycle):
-    """Construct a JSON string object representing a 'AutomationRequest' qTest swagger model.
+def upload_test_results(junit_xml_file_path, qtest_api_token, qtest_project_id, qtest_test_cycle):
+    """Construct a 'AutomationRequest' qTest resource and upload the test results to the desired project in
+    qTest Manager.
 
     Args:
-        output_file_path (str): The file path to use for writing out the 'AutomationRequest' JSON.
-        junit_xml_file_path (str): A file path to a XML element representing a JUnit style testsuite result.
-        test_cycle (str): The parent qTest test cycle for test results.
+        junit_xml_file_path (str): A file path to a XML element representing a JUnit style testsuite response.
+        qtest_api_token (str): Token to use for authorization to the qTest API.
+        qtest_project_id (int): The target qTest project for the test results.
+        qtest_test_cycle (str): The parent qTest test cycle for test results.
 
     Returns:
-        str: A JSON string representation of the qTest swagger model for an automation request.
+        int: The queue processing ID for the job.
+
+    Raises:
+        RuntimeError: Failed to upload test results to qTest Manager.
     """
 
     junit_xml = _load_input_file(junit_xml_file_path)
 
-    api_client = swagger_client.ApiClient()
-    auto_request_dict = api_client.sanitize_for_serialization(_generate_auto_request(junit_xml, test_cycle))
+    swagger_client.configuration.api_key['Authorization'] = qtest_api_token
+    auto_api = swagger_client.TestlogApi()
+    auto_req = _generate_auto_request(junit_xml, qtest_test_cycle)
 
     try:
-        with open(output_file_path, 'w') as f:
-            f.write(json.dumps(auto_request_dict, indent=2))
-    except IOError:
-        raise RuntimeError('Cannot write to "{}" file!'.format(output_file_path))
+        response = auto_api.submit_automation_test_logs_0(project_id=qtest_project_id,
+                                                          body=auto_req,
+                                                          type='automation')
+    except ApiException as e:
+        raise RuntimeError("The qTest API reported an error!\n"
+                           "Status code: {}\n"
+                           "Reason: {}\n"
+                           "Message: {}".format(e.status, e.reason, e.body))
+    if response.state == 'FAILED':
+        raise RuntimeError("The qTest API failed to process the job!\nJob ID: {}".format(response.id))
+
+    return int(response.id)

@@ -11,11 +11,10 @@ with open('README.rst') as readme_file:
 with open('HISTORY.rst') as history_file:
     history = history_file.read()
 
-requirements = ['Click>=6.0', ]
-
-setup_requirements = ['pytest-runner', ]
-
-test_requirements = ['pytest', ]
+dependency_links = ['http://github.com/ryan-rs/qtest-swagger-client/tarball/master#egg=swagger-client-1.0.0']
+requirements = ['Click>=6.0', 'swagger-client']
+setup_requirements = ['pytest-runner']
+test_requirements = ['pytest']
 
 setup(
     author="rcbops",
@@ -33,6 +32,7 @@ setup(
         'Programming Language :: Python :: 3.6',
     ],
     description="Parse JUnitXML and convert into a qTest compliant JSON blob.",
+    dependency_links=dependency_links,
     entry_points={
         'console_scripts': [
             'py_result_uploader=py_result_uploader.cli:main',
@@ -49,6 +49,6 @@ setup(
     test_suite='tests',
     tests_require=test_requirements,
     url='https://github.com/rcbops/py-result-uploader',
-    version='0.1.0',
+    version='0.2.0',
     zip_safe=False,
 )
