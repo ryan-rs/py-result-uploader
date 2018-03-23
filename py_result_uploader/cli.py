@@ -32,7 +32,6 @@ def main(junit_input_file, qtest_project_id, qtest_test_cycle):
         QTEST_API_TOKEN         The qTest API token to use for authorization
     """
 
-    exit_code = 0
     api_token_env_var = 'QTEST_API_TOKEN'
 
     try:
@@ -48,13 +47,11 @@ def main(junit_input_file, qtest_project_id, qtest_test_cycle):
         click.echo(click.style("\nQueue Job ID: {}".format(str(job_id))))
         click.echo(click.style("\nSuccess!", fg='green'))
     except RuntimeError as e:
-        exit_code = 1
         click.echo(click.style(str(e), fg='red'))
-
         click.echo(click.style("\nFailed!", fg='red'))
 
-    return exit_code
+        sys.exit(1)
 
 
 if __name__ == "__main__":
-    sys.exit(main())  # pragma: no cover
+    main()  # pragma: no cover
